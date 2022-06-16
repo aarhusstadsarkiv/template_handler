@@ -20,7 +20,7 @@ typedef struct ArchiveFileData{
 void print_help();
 void insert_template(byte template[], size_t template_size, char* destination_dir);
 TemplateData *get_template(char template_specifier[]);
-ArchiveFileData* get_not_converted_files(sqlite3 *db, char *puid);
+ArchiveFileData* get_not_converted_files(sqlite3 *db, char *checksum, char *puid);
 
 // Helper functions for get_template.
 char* get_template_file_path(char template_specifier[]);
@@ -56,7 +56,16 @@ int main(int argc, char *argv[])
 
     // Get files from database.
     printf("%s\n", argv[3]);
-    ArchiveFileData* filesData = get_not_converted_files(db, argv[3]);
+
+    ArchiveFileData* filesData;
+    /* If argv[3] is less than 10 characters, it is a puid.
+        Else, it must be a checksum.
+    */
+    if(strlen(argv[3]) < 10)
+        filesData = get_not_converted_files(db, NULL, argv[3]);
+    else
+        filesData = get_not_converted_files(db, argv[3], NULL);
+
     TemplateData *template_data = get_template(argv[4]);
     
     char absolute_path_buffer[300];
@@ -77,10 +86,11 @@ int main(int argc, char *argv[])
             correct_path(filesData->files[i].relative_path, strlen(filesData->files[i].relative_path));
             // Get absolute path of destination file.
             insert_combined_path(absolute_path_buffer, argv[2], filesData->files[i].relative_path);
-            
+            // printf("Absolute path: %s\n", absolute_path_buffer);
             // make destination dir.
             get_parent_path(destination_dir_buffer, absolute_path_buffer, strlen(absolute_path_buffer));
             make_output_dir(destination_dir_buffer);
+            // printf("\tDestination directory: %s\n", destination_dir_buffer);
             insert_template(template_data->data, template_data->data_size, destination_dir_buffer);
     }
 
@@ -92,7 +102,7 @@ int main(int argc, char *argv[])
 }
 
 void print_help(){
-    printf("Usage: templateHandler {db_file_path} {destination_root} {puid} {template_name}\n");
+    printf("Usage: templateHandler {db_file_path} {destination_root} {puid or checksum} {template_name}\n");
     printf("Valid template names: file_damaged, file_empty, file_not_convertable, file_not_preservable, password_protected\n");
 }
 
@@ -102,6 +112,7 @@ void insert_template(byte template[], size_t template_size, char* destination_di
     snprintf(destination_file_path, 300, "%s/1.tif", destination_dir);
     target = fopen(destination_file_path, "wb");
     fwrite(template, 1,  template_size, target);
+    fclose(target);
 }
 
 TemplateData* get_template(char template_specifier[]){
@@ -159,16 +170,18 @@ size_t get_file_size(FILE *fp){
     return size;
 }
 
-ArchiveFileData* get_not_converted_files(sqlite3 *db, char *puid){
-    ArchiveFile *files = malloc(sizeof(ArchiveFile)*100); 
+ArchiveFileData* get_not_converted_files(sqlite3 *db, char *checksum, char *puid){
+    ArchiveFile *files = malloc(sizeof(ArchiveFile)*11464); 
     sqlite3_stmt *stmt = NULL;
     int rc = 0;
     size_t i = 0;
 
     char sql_query[200];
-    
-    snprintf(sql_query, 200, "SELECT id, uuid, relative_path FROM _NotConverted WHERE puid = \'%s\';", puid);
-    
+    if(checksum == NULL)
+        snprintf(sql_query, 200, "SELECT id, uuid, relative_path FROM _NotConverted WHERE puid = \'%s\';", puid);
+    else
+        snprintf(sql_query, 200, "SELECT id, uuid, relative_path FROM Files WHERE checksum = \'%s\';", checksum);
+
     rc = sqlite3_prepare_v2(
         db, sql_query,
        -1, &stmt, NULL);
@@ -196,7 +209,7 @@ ArchiveFileData* get_not_converted_files(sqlite3 *db, char *puid){
         strcpy(file->relative_path, sqlite3_column_text(stmt, 2));
     }
 
-    while (i < 100);
+    while (i < 11464);
 
     sqlite3_finalize(stmt);
     ArchiveFileData *data = malloc(sizeof(ArchiveFileData));
