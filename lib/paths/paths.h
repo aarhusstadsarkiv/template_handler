@@ -13,5 +13,6 @@ char* insert_combined_path(char *buffer, char *root, char *to_append);
 
 void get_parent_path(char* buffer, char* original_path, size_t length);
 void make_output_dir(char *outdir);
+void correct_path(char *path, size_t path_length)
 
 #endif

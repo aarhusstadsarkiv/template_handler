@@ -72,3 +72,12 @@ void make_output_dir(char* outdir){
         }
     }
 }
+
+void correct_path(char *path, size_t path_length){
+    for (size_t i = 0; i < path_length; i++)
+    {
+        if(path[i] == '\\')
+            path[i] = '/';
+    }
+    
+}

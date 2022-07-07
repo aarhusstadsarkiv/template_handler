@@ -6,14 +6,7 @@
 #include "lib/templatelib/template.h"
 
 void print_help();
-void correct_path(char *path, size_t path_length){
-    for (size_t i = 0; i < path_length; i++)
-    {
-        if(path[i] == '\\')
-            path[i] = '/';
-    }
-    
-}
+
 
 int main(int argc, char *argv[])
 {
