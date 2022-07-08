@@ -1,17 +1,10 @@
 #include <stdlib.h>
-#include "../ArchiveFile/ArchiveFile.h"
 
 typedef unsigned char byte;
 typedef struct TemplateData{
     byte* data;
     size_t data_size;
 } TemplateData;
-
-
-
-
-// Move to another header and source file.
-ArchiveFileData* get_not_converted_files(sqlite3 *db, char *checksum, char *puid);
 
 
 void insert_template(byte template[], size_t template_size, char* destination_dir);

@@ -4,6 +4,7 @@
 #include <sqlite3.h>
 #include "lib/paths/paths.h"
 #include "lib/templatelib/template.h"
+#include "lib/ArchiveFile/ArchiveFile.h"
 
 void print_help();
 
@@ -26,16 +27,15 @@ int main(int argc, char *argv[])
 
 
     // Get files from database.
-    printf("%s\n", argv[3]);
 
     ArchiveFileData* filesData;
     /* If argv[3] is less than 10 characters, it is a puid.
         Else, it must be a checksum.
     */
     if(strlen(argv[3]) < 10)
-        filesData = get_not_converted_files(db, NULL, argv[3]);
+        filesData = get_not_converted_files(db, NULL, argv[3], 100);
     else
-        filesData = get_not_converted_files(db, argv[3], NULL);
+        filesData = get_not_converted_files(db, argv[3], NULL, 100);
 
     TemplateData *template_data = get_template(argv[4]);
     
